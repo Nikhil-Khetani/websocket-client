@@ -148,7 +148,7 @@ class WebSocketApp:
                  subprotocols: list = None,
                  on_data: Callable = None,
                  socket: socket.socket = None,
-                 send_queue: Queue = None) -> None:
+                 send_queue: Queue|None = None) -> None:
         """
         WebSocketApp initialization
 
