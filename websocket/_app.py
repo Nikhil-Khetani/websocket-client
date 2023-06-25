@@ -5,8 +5,9 @@ import threading
 import time
 import traceback
 import socket
-
+from queue import Queue
 from typing import Callable, Any
+
 
 from . import _logging
 from ._abnf import ABNF
@@ -146,7 +147,8 @@ class WebSocketApp:
                  keep_running: bool = True, get_mask_key: Callable = None, cookie: str = None,
                  subprotocols: list = None,
                  on_data: Callable = None,
-                 socket: socket.socket = None) -> None:
+                 socket: socket.socket = None,
+                 send_queue: Queue = None) -> None:
         """
         WebSocketApp initialization
 
@@ -233,6 +235,9 @@ class WebSocketApp:
         self.has_done_teardown = False
         self.has_done_teardown_lock = threading.Lock()
 
+        self.send_thread=None
+        self.send_queue = send_queue
+
     def send(self, data: str, opcode: int = ABNF.OPCODE_TEXT) -> None:
         """
         send message
@@ -284,6 +289,23 @@ class WebSocketApp:
                     self.sock.ping(self.ping_payload)
                 except Exception as e:
                     _logging.debug("Failed to send ping: {err}".format(err=e))
+
+    def _start_send_thread(self)->None:
+        self.send_thread = threading.Thread(target=self._send_msg)
+        self.send_thread.daemon = True
+        self.send_thread.start()
+
+    def _send_msg(self)->None:
+        if self.sock:
+            while self.keep_running:
+                if not self.send_queue.empty:
+                    self.sock.send(self.send_queue.get())
+                time.sleep(0)
+
+    def _stop_send_thread(self) -> None:
+        if self.send_thread and self.send_thread.is_alive():
+            self.send_thread.join(3)
+
 
     def run_forever(self, sockopt: tuple = None, sslopt: dict = None,
                     ping_interval: float = 0, ping_timeout: float or None = None,
@@ -388,6 +410,8 @@ class WebSocketApp:
 
             self._stop_ping_thread()
             self.keep_running = False
+            self._stop_send_thread()
+
             if self.sock:
                 self.sock.close()
             close_status_code, close_reason = self._get_close_args(
@@ -422,6 +446,9 @@ class WebSocketApp:
 
                 if self.ping_interval:
                     self._start_ping_thread()
+
+                if self.send_queue:
+                    self._start_send_thread()
 
                 self._callback(self.on_open)
 
