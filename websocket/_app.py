@@ -297,7 +297,7 @@ class WebSocketApp:
         self.send_thread.start()
 
     def _send_msg(self)->None:    
-        while self.keep_running:
+        while self.keep_running is True:
             _logging.debug("awaiting send queue message")
             if self.sock:
                 if not self.send_queue.empty:
