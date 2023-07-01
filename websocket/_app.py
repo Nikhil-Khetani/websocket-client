@@ -451,7 +451,7 @@ class WebSocketApp:
                 if self.ping_interval:
                     self._start_ping_thread()
 
-                if self.send_queue:
+                if self.send_queue is not None:
                     self._start_send_thread()
 
                 self._callback(self.on_open)
