@@ -299,10 +299,10 @@ class WebSocketApp:
     def _send_msg(self)->None:    
         while self.keep_running is True:
             if self.sock:
-                if not self.send_queue.empty:
-                    send_msg = self.send_queue.get(timeout=2)
-                    _logging.debug("Sending message")
-                    self.sock.send(send_msg)
+                _logging.debug("Awaiting message")
+                send_msg = self.send_queue.get()
+                _logging.debug("Sending message")
+                self.sock.send(send_msg)
             time.sleep(0)
 
     def _stop_send_thread(self) -> None:
