@@ -293,13 +293,16 @@ class WebSocketApp:
     def _start_send_thread(self)->None:
         self.send_thread = threading.Thread(target=self._send_msg)
         self.send_thread.daemon = True
+        _logging.debug("Starting send thread")
         self.send_thread.start()
 
     def _send_msg(self)->None:
         if self.sock:
             while self.keep_running:
                 if not self.send_queue.empty:
-                    self.sock.send(self.send_queue.get())
+                    send_msg = self.send_queue.get()
+                    _logging.debug("Sending message %s", send_msg)
+                    self.sock.send(send_msg)
                 time.sleep(0)
 
     def _stop_send_thread(self) -> None:
