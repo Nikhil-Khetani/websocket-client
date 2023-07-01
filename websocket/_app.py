@@ -296,14 +296,14 @@ class WebSocketApp:
         _logging.debug("Starting send thread")
         self.send_thread.start()
 
-    def _send_msg(self)->None:
-        if self.sock:
-            while self.keep_running:
+    def _send_msg(self)->None:    
+        while self.keep_running:
+            if self.sock:
                 if not self.send_queue.empty:
-                    send_msg = self.send_queue.get()
-                    _logging.debug("Sending message %s", send_msg)
+                    send_msg = self.send_queue.get(timeout=2)
+                    _logging.debug("Sending message")
                     self.sock.send(send_msg)
-                time.sleep(0)
+            time.sleep(0)
 
     def _stop_send_thread(self) -> None:
         if self.send_thread and self.send_thread.is_alive():
