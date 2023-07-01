@@ -298,6 +298,7 @@ class WebSocketApp:
 
     def _send_msg(self)->None:    
         while self.keep_running:
+            _logging.debug("awaiting send queue message")
             if self.sock:
                 if not self.send_queue.empty:
                     send_msg = self.send_queue.get(timeout=2)
